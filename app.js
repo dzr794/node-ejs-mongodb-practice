@@ -30,7 +30,8 @@ app.set('view engine', 'ejs');
 // app.set('views', 'myviews');
 
 // middleware and static files
-app.use(express.static('public'))
+app.use(express.static('public'));
+app.use(express.urlencoded({extended: true}));
 app.use( morgan('dev'));
 
 app.get('/add-blog', (req, res) => {
@@ -59,15 +60,6 @@ app.get('/all-blogs', (req, res) => {
     });
 });
 
-app.get('/single-blog', (req, res) => {
-  Blog.findById('669d6b0895d7e7e0601fa87b')
-    .then( (result) => {
-      res.send(result)
-    })
-    .catch( (err) => {
-      console.log(err);
-    })
-});
 
 
 // routes
@@ -86,6 +78,41 @@ app.get('/blogs', (req, res) => {
       res.render('index', { title: 'All blogs', blogs: result });
     })
     .catch((err) => {
+      console.log(err);
+    });
+});
+
+app.post('/blogs', (req, res) => {
+  console.table( req.body );
+  const blog = new Blog(req.body);
+  blog.save()
+    .then((result) => {
+      res.redirect('/blogs');
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
+
+app.get('/blog/:id', (req, res) => {
+  const id = req.params.id;
+  Blog.findById(id)
+    .then((result) => {
+      res.render('details', { title: 'Blog Details', blog: result });
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+});
+
+app.delete('/blogs/:id', (req, res) => {
+  const id = req.params.id;
+
+  Blog.findByIdAndDelete(id)
+    .then(result => {
+      res.json({ redirect: '/blogs' });
+    })
+    .catch(err => {
       console.log(err);
     });
 });
