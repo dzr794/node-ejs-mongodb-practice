@@ -1,32 +1,93 @@
 const express = require('express');
 const morgan = require('morgan');
+const mongoose = require("mongoose");
+const Blog = require('./_models/blog');
 
 // express app
 const app = express();
 
-// listen for requests
-app.listen(3000);
-console.log("listening on: http://localhost:3000");
+const startListening = () => {
+  // listen for requests
+  app.listen(3000);
+  console.log("listening on: http://localhost:3000");
+}
 
-// middleware and static files
-app.use(express.static('public'))
-app.use( morgan('dev'));
+const DbUser = 'node-cc-user';
+const DbPassword = 'LQLgKdfwFryu1k6O';
+const DbUrl = `mongodb+srv://${DbUser}:${DbPassword}@nodemongopractice.cu4nfv6.mongodb.net/NodeMongoPractice?retryWrites=true&w=majority&appName=NodeMongoPractice`;
+
+mongoose.connect(DbUrl)
+  .then( (result) => {
+    console.log('connected to the DB');
+    // console.log(result);
+    startListening();
+  })
+  .catch( (err) => console.log(err) );
+
 
 // register view engine
 app.set('view engine', 'ejs');
 // app.set('views', 'myviews');
 
+// middleware and static files
+app.use(express.static('public'))
+app.use( morgan('dev'));
+
+app.get('/add-blog', (req, res) => {
+  const blog = new Blog({
+    title: 'new blog',
+    snippet: 'about my new blog',
+    body: 'more about my new blog'
+  });
+
+  blog.save()
+    .then( (result) => {
+      res.send(result)
+    })
+    .catch( (err) => {
+      console.log(err);
+    });
+});
+
+app.get('/all-blogs', (req, res) => {
+  Blog.find()
+    .then( (result) => {
+      res.send(result)
+    })
+    .catch( (err) => {
+      console.log(err);
+    });
+});
+
+app.get('/single-blog', (req, res) => {
+  Blog.findById('669d6b0895d7e7e0601fa87b')
+    .then( (result) => {
+      res.send(result)
+    })
+    .catch( (err) => {
+      console.log(err);
+    })
+});
+
+
+// routes
 app.get('/', (req, res) => {
-  const blogs = [
-    {title: 'Yoshi finds eggs', snippet: 'Lorem ipsum dolor sit amet consectetur'},
-    {title: 'Mario finds stars', snippet: 'Lorem ipsum dolor sit amet consectetur'},
-    {title: 'How to defeat bowser', snippet: 'Lorem ipsum dolor sit amet consectetur'},
-  ];
-  res.render('index', { title: 'Home', blogs });
+  res.redirect('/blogs');
 });
 
 app.get('/about', (req, res) => {
   res.render('about', { title: 'About' });
+});
+
+// Blog routes
+app.get('/blogs', (req, res) => {
+  Blog.find().sort( {createdAt : -1} )
+    .then((result) => {
+      res.render('index', { title: 'All blogs', blogs: result });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 app.get('/blogs/create', (req, res) => {
