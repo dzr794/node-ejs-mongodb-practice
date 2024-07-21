@@ -7,17 +7,14 @@ const app = express();
 // listen for requests
 app.listen(3000);
 console.log("listening on: http://localhost:3000");
+
+// middleware and static files
+app.use(express.static('public'))
+app.use( morgan('dev'));
+
 // register view engine
 app.set('view engine', 'ejs');
 // app.set('views', 'myviews');
-
-app.use( (req, res, next) => {
-  console.log(`new request made: ${req.url}`);
-  console.log(`request method: ${req.method}`);
-  console.log(`host: ${req.hostname}`);
-  console.log(`path: ${req.path}`);
-  next();
-});
 
 app.get('/', (req, res) => {
   const blogs = [
